@@ -1,0 +1,9 @@
+# Personal voice recordings stay out of git
+*.m4a
+*.mp3
+*.wav
+*.ogg
+*.webm
+recordings/
+__pycache__/
+.DS_Store
