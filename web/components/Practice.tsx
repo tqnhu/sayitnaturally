@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import type { CoachReply } from "@/lib/coach";
 import { analyseBlob } from "@/lib/audio";
 import { AnalysisError, METERS, fmtTime, type Analysis } from "@/lib/analysis";
 
@@ -105,12 +106,37 @@ export default function Practice() {
         {error && <p className="err">{error}</p>}
       </section>
 
-      {result && <Results a={result} />}
+      {result && <Results a={result} text={text} />}
     </>
   );
 }
 
-function Results({ a }: { a: Analysis }) {
+function Results({ a, text }: { a: Analysis; text: string }) {
+  const [coach, setCoach] = useState<CoachReply | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function getCoaching() {
+    setBusy(true);
+    setErr("");
+    try {
+      const { dur, rate, artic, speakShare, group, pausesPerMin, longPauses, f0, range, falling } = a;
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          text: text.slice(0, 2000),
+          results: { dur, rate, artic, speakShare, group, pausesPerMin, longPauses: longPauses.slice(0, 20), f0, range, falling },
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setCoach(await res.json());
+    } catch {
+      setErr("Coaching is unavailable right now. Your results above are still correct.");
+    }
+    setBusy(false);
+  }
+
   return (
     <section className="card">
       <h2>3. How it sounded ({a.dur}s)</h2>
@@ -145,6 +171,32 @@ function Results({ a }: { a: Analysis }) {
       })}
       {a.longPauses.length > 0 && <p className="status">Long pauses at {a.longPauses.join(", ")}.</p>}
       <Pitch a={a} />
+      <div style={{ marginTop: 16 }}>
+        <button onClick={getCoaching} disabled={busy}>
+          {busy ? "Coach is thinking…" : "Get coaching"}
+        </button>
+        <p className="status">Sends your measurements and text, never your audio.</p>
+        {err && <p className="err">{err}</p>}
+        {coach && (
+          <div>
+            <h2>{coach.headline}</h2>
+            {coach.strengths.length > 0 && (
+              <ul>
+                {coach.strengths.map((s, i) => (
+                  <li key={i}>{s}</li>
+                ))}
+              </ul>
+            )}
+            {coach.fixes.map((f, i) => (
+              <div className="mt" key={i}>
+                <strong>{f.issue}</strong>
+                <div>{f.why}</div>
+                <small>Try: {f.drill}</small>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
