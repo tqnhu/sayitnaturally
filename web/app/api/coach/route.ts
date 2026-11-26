@@ -1,9 +1,12 @@
 import { generateText, Output } from "ai";
 import { MODEL, SYSTEM, buildPrompt, coachReply, coachRequest } from "@/lib/coach";
+import { rateLimit } from "@/lib/ratelimit";
 
 // Calls the model through the Vercel AI Gateway (plain "provider/model" string).
 // On Vercel the deployment authenticates with its OIDC token; locally set AI_GATEWAY_API_KEY.
 export async function POST(req: Request) {
+  const limited = await rateLimit(req);
+  if (limited) return limited;
   const parsed = coachRequest.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return Response.json({ error: "Invalid request" }, { status: 400 });

@@ -6,9 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node tests/analysis.test.ts && node tests/learn.test.ts"
+    "test": "node tests/analysis.test.ts && node tests/learn.test.ts && node tests/ratelimit.test.ts"
   },
   "dependencies": {
+    "@vercel/functions": "^3.11.4",
     "ai": "^7.0.181",
     "next": "16.4.6",
     "react": "19.3.0",

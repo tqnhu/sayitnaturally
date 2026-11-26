@@ -85,6 +85,11 @@ export default function Learn({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ text: ownText.slice(0, 1500), target: targetLabel(s.target), native: s.native || "unknown" }),
       });
+      if (res.status === 429) {
+        setMarkErr("You are going fast. Wait a minute, then try again.");
+        setMarking(false);
+        return;
+      }
       if (!res.ok) throw new Error();
       const m = (await res.json()) as Markup;
       if (!m.paras?.length) throw new Error();

@@ -1,8 +1,11 @@
 import { generateText, Output } from "ai";
 import { MODEL, MARKUP_SYSTEM, markupReply, markupRequest } from "@/lib/coach";
+import { rateLimit } from "@/lib/ratelimit";
 
 // Marks up a learner's own text through the Vercel AI Gateway (same setup as /api/coach).
 export async function POST(req: Request) {
+  const limited = await rateLimit(req);
+  if (limited) return limited;
   const parsed = markupRequest.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request" }, { status: 400 });
   const { text, target, native } = parsed.data;

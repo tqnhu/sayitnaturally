@@ -23,4 +23,6 @@ cd web && npm install
 npm run dev     # http://localhost:3000
 npm test        # analysis, mark-up parsing and scoring checks
 ```
-Not built yet: server-side speech-to-text, accounts, sound-level scoring, rate limiting on the API routes.
+Rate limits on the AI routes (`web/lib/ratelimit*.ts`): 8 requests a minute and 40 an hour per client, shared across
+`/api/coach` and `/api/markup`, plus 400 an hour overall. Counts are approximate (Vercel Runtime Cache, per region).
+Not built yet: server-side speech-to-text, accounts, sound-level scoring.

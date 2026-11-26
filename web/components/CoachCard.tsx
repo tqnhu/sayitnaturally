@@ -30,6 +30,11 @@ export default function CoachCard({
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
+      if (res.status === 429) {
+        setErr("You are going fast. Wait a minute, then try again.");
+        setBusy(false);
+        return;
+      }
       if (!res.ok) throw new Error();
       setCoach(await res.json());
     } catch {
