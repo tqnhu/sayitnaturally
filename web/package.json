@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node tests/analysis.test.ts && node tests/learn.test.ts && node tests/ratelimit.test.ts"
+    "test": "node tests/analysis.test.ts && node tests/learn.test.ts && node tests/ratelimit.test.ts && node tests/voices.test.ts"
   },
   "dependencies": {
     "@vercel/functions": "^3.11.4",

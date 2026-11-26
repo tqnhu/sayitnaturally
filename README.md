@@ -25,4 +25,6 @@ npm test        # analysis, mark-up parsing and scoring checks
 ```
 Rate limits on the AI routes (`web/lib/ratelimit*.ts`): 8 requests a minute and 40 an hour per client, shared across
 `/api/coach` and `/api/markup`, plus 400 an hour overall. Counts are approximate (Vercel Runtime Cache, per region).
+Listen, Slow and Hear model use the best voice installed on the device (neural, natural or enhanced voices first);
+the Model voice setting lets you pick another (`web/lib/voices.ts`).
 Not built yet: server-side speech-to-text, accounts, sound-level scoring.

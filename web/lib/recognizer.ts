@@ -1,3 +1,5 @@
+import { listVoices, pickVoice } from "./voices.ts";
+
 // Thin wrapper over the browser's speech recognition (Chrome, Edge, Safari). No audio leaves the page
 // through our code; the browser may send it to its own speech service.
 type RecEvent = { resultIndex: number; results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }> };
@@ -59,11 +61,20 @@ export function startRecognition(
   return { stop: () => rec.stop() };
 }
 
-export function speak(text: string, lang: string, rate = 1): void {
+export function speak(text: string, lang: string, rate = 1, voiceName = ""): void {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
+  const synth = window.speechSynthesis;
+  synth.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = lang;
   u.rate = rate;
-  window.speechSynthesis.speak(u);
+  const v = pickVoice(synth.getVoices(), lang, voiceName);
+  if (v) u.voice = v;
+  synth.speak(u);
+}
+
+/** Voices installed for a language, best first. Empty until the browser has loaded its voice list. */
+export function voicesFor(lang: string): SpeechSynthesisVoice[] {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return [];
+  return listVoices(window.speechSynthesis.getVoices(), lang);
 }

@@ -3,11 +3,12 @@ export type Settings = {
   target: string; // BCP 47 code of the language being learned
   native: string; // first language, "" until the first-visit questions are answered
   voice: "browser";
+  voiceName: string; // "" = automatic (best available voice on the device)
   role: Role;
   onboarded: boolean;
 };
 
-export const DEFAULTS: Settings = { target: "en-US", native: "", voice: "browser", role: "general", onboarded: false };
+export const DEFAULTS: Settings = { target: "en-US", native: "", voice: "browser", voiceName: "", role: "general", onboarded: false };
 
 export const TARGETS = [
   { code: "en-US", label: "English (American)" },
@@ -45,6 +46,7 @@ export function loadSettings(): Settings {
       target: TARGETS.some((t) => t.code === p.target) ? (p.target as string) : DEFAULTS.target,
       native: typeof p.native === "string" ? p.native.slice(0, 40) : "",
       voice: "browser",
+      voiceName: typeof p.voiceName === "string" ? p.voiceName.slice(0, 120) : "",
       role: ROLES.some((r) => r.value === p.role) ? (p.role as Role) : "general",
       onboarded: p.onboarded === true,
     };

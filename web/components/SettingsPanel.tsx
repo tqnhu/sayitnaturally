@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { speak, voicesFor } from "@/lib/recognizer";
 import { NATIVES, ROLES, TARGETS, type Role, type Settings } from "@/lib/settings";
 
 export default function SettingsPanel({
@@ -11,6 +13,15 @@ export default function SettingsPanel({
   set: (patch: Partial<Settings>) => void;
   onClose: () => void;
 }) {
+  const [voices, setVoices] = useState<{ name: string; lang: string }[]>([]);
+  useEffect(() => {
+    const load = () => setVoices(voicesFor(s.target).map((v) => ({ name: v.name, lang: v.lang })));
+    load();
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.addEventListener("voiceschanged", load);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", load);
+  }, [s.target]);
+
   return (
     <section className="panel" id="settings-panel" aria-label="Language settings">
       <div className="row sp">
@@ -39,9 +50,20 @@ export default function SettingsPanel({
         </label>
         <label className="f">
           <span>Model voice</span>
-          <select value={s.voice} onChange={() => set({ voice: "browser" })}>
-            <option value="browser">Browser voice (matches accent)</option>
+          <select value={s.voiceName} onChange={(e) => set({ voiceName: e.target.value })}>
+            <option value="">Automatic (best on this device)</option>
+            {voices.map((v) => (
+              <option key={v.name} value={v.name}>{v.name}</option>
+            ))}
           </select>
+          <button
+            type="button"
+            className="btn ghost sm"
+            style={{ justifySelf: "start" }}
+            onClick={() => speak("Say it naturally: let your voice fall at the end.", s.target, 1, s.voiceName)}
+          >
+            Test voice
+          </button>
         </label>
         <label className="f">
           <span>I practise as</span>
@@ -53,7 +75,7 @@ export default function SettingsPanel({
         </label>
       </div>
       <p className="small" style={{ marginTop: 12 }}>
-        Coaching uses your first language to explain likely sound errors.
+        Voices come from your device and browser, so the choice differs between devices. Coaching uses your first language to explain likely sound errors.
       </p>
     </section>
   );

@@ -234,8 +234,8 @@ export default function Learn({
                     ))}
                   </div>
                   <div className="row">
-                    <button className="btn ghost sm" onClick={() => speak(paraText(p), s.target, 1)}>Listen</button>
-                    <button className="btn ghost sm" onClick={() => speak(paraText(p), s.target, 0.7)}>Slow</button>
+                    <button className="btn ghost sm" onClick={() => speak(paraText(p), s.target, 1, s.voiceName)}>Listen</button>
+                    <button className="btn ghost sm" onClick={() => speak(paraText(p), s.target, 0.7, s.voiceName)}>Slow</button>
                     <button className="btn sm" onClick={() => practise(pi)}>Practise this</button>
                   </div>
                 </div>
@@ -287,7 +287,7 @@ export default function Learn({
         <section className="card" ref={speakRef}>
           <div className="row sp">
             <h2>Speak it</h2>
-            <button className="btn ghost sm" onClick={() => speak(target, s.target, 1)} disabled={!target}>Hear model</button>
+            <button className="btn ghost sm" onClick={() => speak(target, s.target, 1, s.voiceName)} disabled={!target}>Hear model</button>
           </div>
           <div className="target">{target || "Choose a text, or mark up your own, to start."}</div>
           <div className="row">
@@ -314,7 +314,7 @@ export default function Learn({
                     <span
                       className={`w ${w.k}`}
                       title={w.k === "sub" ? `Heard: ${w.heard.join(" ")}` : w.k === "miss" ? "Not heard" : undefined}
-                      onClick={() => w.k !== "ok" && speak(w.word, s.target, 0.75)}
+                      onClick={() => w.k !== "ok" && speak(w.word, s.target, 0.75, s.voiceName)}
                     >
                       {w.word}
                     </span>{" "}
