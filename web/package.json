@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node tests/analysis.test.ts"
+    "test": "node tests/analysis.test.ts && node tests/learn.test.ts"
   },
   "dependencies": {
     "ai": "^7.0.181",

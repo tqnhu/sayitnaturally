@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { CoachReply } from "@/lib/coach";
+import CoachCard from "@/components/CoachCard";
+import type { HistoryItem } from "@/lib/history";
+import type { Settings } from "@/lib/settings";
 import { analyseBlob } from "@/lib/audio";
 import { AnalysisError, METERS, fmtTime, type Analysis } from "@/lib/analysis";
 
@@ -11,7 +13,7 @@ const SAMPLE =
 
 type Phase = "idle" | "recording" | "analysing";
 
-export default function Practice() {
+export default function FreePractice({ s, onHistory }: { s: Settings; onHistory: (h: HistoryItem) => void }) {
   const [text, setText] = useState(SAMPLE);
   const [phase, setPhase] = useState<Phase>("idle");
   const [result, setResult] = useState<Analysis | null>(null);
@@ -25,7 +27,9 @@ export default function Practice() {
     setPhase("analysing");
     setError("");
     try {
-      setResult(await analyseBlob(blob));
+      const a = await analyseBlob(blob);
+      setResult(a);
+      onHistory({ d: Date.now(), mode: "Free", label: "Own text", pct: null, detail: `${a.dur}s, range ${a.range} st` });
     } catch (e) {
       setResult(null);
       setError(
@@ -66,7 +70,8 @@ export default function Practice() {
   }
 
   return (
-    <>
+    <div className="grid">
+      <div className="col">
       <section className="card">
         <h2>1. Your text</h2>
         <textarea value={text} onChange={(e) => setText(e.target.value)} aria-label="Text to read aloud" />
@@ -77,11 +82,11 @@ export default function Practice() {
         <h2>2. Read it aloud</h2>
         <div className="row">
           {phase === "recording" ? (
-            <button className="rec" onClick={stop}>
+            <button className="btn rec" onClick={stop}>
               Stop ({fmtTime(secs)})
             </button>
           ) : (
-            <button onClick={start} disabled={phase === "analysing"}>
+            <button className="btn" onClick={start} disabled={phase === "analysing"}>
               Record
             </button>
           )}
@@ -106,98 +111,63 @@ export default function Practice() {
         {error && <p className="err">{error}</p>}
       </section>
 
-      {result && <Results a={result} text={text} />}
-    </>
+      </div>
+      <div className="col">{result && <Results a={result} text={text} s={s} />}</div>
+    </div>
   );
 }
 
-function Results({ a, text }: { a: Analysis; text: string }) {
-  const [coach, setCoach] = useState<CoachReply | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState("");
-
-  async function getCoaching() {
-    setBusy(true);
-    setErr("");
-    try {
-      const { dur, rate, artic, speakShare, group, pausesPerMin, longPauses, f0, range, falling } = a;
-      const res = await fetch("/api/coach", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          text: text.slice(0, 2000),
-          results: { dur, rate, artic, speakShare, group, pausesPerMin, longPauses: longPauses.slice(0, 20), f0, range, falling },
-        }),
-      });
-      if (!res.ok) throw new Error();
-      setCoach(await res.json());
-    } catch {
-      setErr("Coaching is unavailable right now. Your results above are still correct.");
-    }
-    setBusy(false);
-  }
-
+function Results({ a, text, s }: { a: Analysis; text: string; s: Settings }) {
+  const { dur, rate, artic, speakShare, group, pausesPerMin, longPauses, f0, range, falling } = a;
+  const body = {
+    text: text.slice(0, 2000),
+    native: s.native || "unknown",
+    audience: s.role,
+    results: { dur, rate, artic, speakShare, group, pausesPerMin, longPauses: longPauses.slice(0, 20), f0, range, falling },
+  };
   return (
-    <section className="card">
-      <h2>3. How it sounded ({a.dur}s)</h2>
-      {METERS.map((m) => {
-        const v = (a[m.key] ?? 0) as number;
-        const p = (n: number) => Math.max(0, Math.min(100, (100 * n) / m.max));
-        const good = v >= m.lo && v <= m.hi;
-        const hint = good
-          ? "On target."
-          : v > m.hi && "tooHigh" in m
-            ? m.tooHigh
-            : v > m.hi
-              ? "Above the usual range."
-              : m.tip;
-        return (
-          <div className="mt" key={m.key}>
-            <div className="lab">
-              <span>{m.label}</span>
-              <span>
-                {v} {m.unit}
-              </span>
-            </div>
-            <div className="track">
-              <div className="zone" style={{ left: `${p(m.lo)}%`, width: `${p(m.hi) - p(m.lo)}%` }} />
-              <div className="dot" style={{ left: `${p(v)}%`, background: good ? "var(--brand)" : "var(--acc)" }} />
-            </div>
-            <small>
-              Native target {m.lo}–{m.hi}. {hint}
-            </small>
-          </div>
-        );
-      })}
-      {a.longPauses.length > 0 && <p className="status">Long pauses at {a.longPauses.join(", ")}.</p>}
-      <Pitch a={a} />
-      <div style={{ marginTop: 16 }}>
-        <button onClick={getCoaching} disabled={busy}>
-          {busy ? "Coach is thinking…" : "Get coaching"}
-        </button>
-        <p className="status">Sends your measurements and text, never your audio.</p>
-        {err && <p className="err">{err}</p>}
-        {coach && (
-          <div>
-            <h2>{coach.headline}</h2>
-            {coach.strengths.length > 0 && (
-              <ul>
-                {coach.strengths.map((s, i) => (
-                  <li key={i}>{s}</li>
-                ))}
-              </ul>
-            )}
-            {coach.fixes.map((f, i) => (
-              <div className="mt" key={i}>
-                <strong>{f.issue}</strong>
-                <div>{f.why}</div>
-                <small>Try: {f.drill}</small>
+    <>
+      <section className="card">
+        <h2>3. How it sounded ({a.dur}s)</h2>
+        {METERS.map((m) => {
+          const v = (a[m.key] ?? 0) as number;
+          const p = (n: number) => Math.max(0, Math.min(100, (100 * n) / m.max));
+          const good = v >= m.lo && v <= m.hi;
+          const hint = good
+            ? "On target."
+            : v > m.hi && "tooHigh" in m
+              ? m.tooHigh
+              : v > m.hi
+                ? "Above the usual range."
+                : m.tip;
+          return (
+            <div className="mt" key={m.key}>
+              <div className="lab">
+                <span>{m.label}</span>
+                <span>
+                  {v} {m.unit}
+                </span>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </section>
+              <div className="track">
+                <div className="zone" style={{ left: `${p(m.lo)}%`, width: `${p(m.hi) - p(m.lo)}%` }} />
+                <div className="dot" style={{ left: `${p(v)}%`, background: good ? "var(--brand)" : "var(--acc)" }} />
+              </div>
+              <small>
+                Native target {m.lo}–{m.hi}. {hint}
+              </small>
+            </div>
+          );
+        })}
+        {a.longPauses.length > 0 && <p className="status">Long pauses at {a.longPauses.join(", ")}.</p>}
+        <Pitch a={a} />
+      </section>
+      <CoachCard
+        body={body}
+        ready
+        idleHint=""
+        privacy="Sends your measurements and text, never your audio."
+      />
+    </>
   );
 }
 

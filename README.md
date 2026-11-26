@@ -12,11 +12,15 @@ node tests/analysis_harness.js app/index.html my.wav       # run the app's analy
 ```
 
 ## Hosted web app (`web/`)
-The hosted version of SayIt: Next.js with real microphone recording and the same prosody analysis, ported to
-TypeScript (`web/lib/analysis.ts`). Analysis runs in the browser; nothing is uploaded.
+Next.js app with two modes and one Settings panel for language choices (saved on the device):
+- **Learn**: pre-marked practice texts (or your own, marked up by Claude), words to drill, live scoring with the
+  browser's speech recognition (Chrome, Edge, Safari), coaching.
+- **Free practice**: paste a text, record or upload audio, see prosody meters and a pitch line, get coaching.
+Audio analysis runs in the browser. Claude mark-up and coaching go through `/api/markup` and `/api/coach` using
+the Vercel AI Gateway (no API key in code; set `AI_GATEWAY_API_KEY` locally).
 ```bash
 cd web && npm install
 npm run dev     # http://localhost:3000
-npm test        # synthetic-signal check of the analysis
+npm test        # analysis, mark-up parsing and scoring checks
 ```
-Not built yet: Claude mark-up and coaching (needs a server route), speech-to-text scoring, accounts and history.
+Not built yet: server-side speech-to-text, accounts, sound-level scoring, rate limiting on the API routes.

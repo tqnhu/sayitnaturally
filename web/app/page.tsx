@@ -1,11 +1,9 @@
-import Practice from "@/components/Practice";
+import AppShell from "@/components/AppShell";
 
 export default function Home() {
   return (
-    <main className="wrap">
-      <h1>SayIt</h1>
-      <p className="sub">Read your own text aloud and see how your pace, pauses and intonation compare with natural English.</p>
-      <Practice />
+    <main>
+      <AppShell />
     </main>
   );
 }
